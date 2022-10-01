@@ -10,6 +10,6 @@ RUN go build ./...
 FROM ci AS test
 RUN go test ./...
 
-FROM ubuntu:jammy@sha256:bace9fb0d5923a675c894d5c815da75ffe35e24970166a48a4460a48ae6e0d19
+FROM ubuntu:jammy@sha256:20fa2d7bb4de7723f542be5923b06c4d704370f0390e4ae9e1c833c8785644c1
 COPY --from=build /src/ipman /usr/bin/
 ENTRYPOINT ["ipman"]
