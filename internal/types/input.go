@@ -6,6 +6,7 @@ type Input struct {
 	File
 	Version  int       `yaml:"version"`
 	Networks []Network `yaml:"-"`
+	DNSProviders []DNSProvider `yaml:"-"`
 }
 
 func (input *Input) Validate() error {
