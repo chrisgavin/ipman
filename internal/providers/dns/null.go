@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/chrisgavin/ipman/internal/actions"
@@ -11,7 +12,7 @@ type NullProvider struct {
 	Type string
 }
 
-func (provider *NullProvider) GetActions(network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DNSAction, error) {
+func (provider *NullProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DNSAction, error) {
 	result := []actions.DNSAction{}
 	for _, host := range hosts {
 		primaryInterface := host.Interfaces[0]
