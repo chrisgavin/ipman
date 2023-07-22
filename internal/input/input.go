@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/chrisgavin/ipman/internal/registry"
 	"github.com/chrisgavin/ipman/internal/types"
 	"github.com/chrisgavin/ipman/internal/validation"
 	"github.com/pkg/errors"
@@ -18,7 +19,7 @@ const currentVersion = 1
 
 var ErrUnsupportedVersion = errors.New("Unsupported input version.")
 
-func readFile[T interface{}](path string, destination T) error {
+func readFile[T interface{}](path string, destination T, knownFields bool) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -26,7 +27,7 @@ func readFile[T interface{}](path string, destination T) error {
 	defer file.Close()
 
 	decoder := yaml.NewDecoder(file)
-	decoder.KnownFields(true)
+	decoder.KnownFields(knownFields)
 	if err := decoder.Decode(destination); err != nil {
 		return validation.NewValidationError(path, "File could not be parsed.", err)
 	}
@@ -37,7 +38,7 @@ func readFile[T interface{}](path string, destination T) error {
 func ReadInput(path string) (*types.Input, error) {
 	rootPath := filepath.Join(path, self)
 	input := types.Input{}
-	if err := readFile(rootPath, &input); err != nil {
+	if err := readFile(rootPath, &input, true); err != nil {
 		return nil, err
 	}
 	input.Path = rootPath
@@ -45,21 +46,47 @@ func ReadInput(path string) (*types.Input, error) {
 		return nil, ErrUnsupportedVersion
 	}
 
+	providersPath := filepath.Join(path, "_providers")
+	if _, err := os.Stat(providersPath); !os.IsNotExist(err) {
+		providers, err := ioutil.ReadDir(providersPath)
+		if err != nil {
+			return nil, err
+		}
+		for _, providerPathInfo := range providers {
+			providerPath := filepath.Join(providersPath, providerPathInfo.Name())
+			dynamicProvider := types.DynamicProvider{}
+			if err := readFile(providerPath, &dynamicProvider, false); err != nil {
+				return nil, err
+			}
+			provider, err := registry.NewDNSProvider(dynamicProvider.Type)
+			if err != nil {
+				return nil, err
+			}
+			if err := readFile(providerPath, provider, true); err != nil {
+				return nil, err
+			}
+			input.DNSProviders = append(input.DNSProviders, provider)
+		}
+	}
+
 	networkPaths, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 	for _, networkPathInfo := range networkPaths {
+		if strings.HasPrefix(networkPathInfo.Name(), "_") {
+			continue
+		}
 		fullNetworkPath := filepath.Join(path, networkPathInfo.Name())
 		if !networkPathInfo.IsDir() {
 			if networkPathInfo.Name() == self {
 				continue
 			}
-			return nil, errors.Errorf("Unexpected file at %s.", fullNetworkPath) // TODO
+			return nil, errors.Errorf("Unexpected file at %s.", fullNetworkPath)
 		}
 		networkPath := filepath.Join(fullNetworkPath, self)
 		network := types.Network{}
-		if err := readFile(networkPath, &network); err != nil {
+		if err := readFile(networkPath, &network, true); err != nil {
 			return nil, err
 		}
 		network.Path = networkPath
@@ -78,7 +105,7 @@ func ReadInput(path string) (*types.Input, error) {
 			}
 			sitePath := filepath.Join(fullSitePath, self)
 			site := types.Site{}
-			if err := readFile(sitePath, &site); err != nil {
+			if err := readFile(sitePath, &site, true); err != nil {
 				return nil, err
 			}
 			site.Path = sitePath
@@ -97,7 +124,7 @@ func ReadInput(path string) (*types.Input, error) {
 				}
 				poolPath := filepath.Join(fullPoolPath, self)
 				pool := types.Pool{}
-				if err := readFile(poolPath, &pool); err != nil {
+				if err := readFile(poolPath, &pool, true); err != nil {
 					return nil, err
 				}
 				pool.Path = poolPath
@@ -115,7 +142,7 @@ func ReadInput(path string) (*types.Input, error) {
 						continue
 					}
 					host := types.Host{}
-					if err := readFile(fullHostPath, &host); err != nil {
+					if err := readFile(fullHostPath, &host, true); err != nil {
 						return nil, err
 					}
 					host.Path = fullHostPath
