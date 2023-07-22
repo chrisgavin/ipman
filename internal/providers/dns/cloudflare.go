@@ -31,7 +31,7 @@ func (provider *CloudflareProvider) apiClient() (*cloudflare.API, error) {
 	return api, errors.Wrap(err, "Failed to create Cloudflare API client.")
 }
 
-func (provider *CloudflareProvider) GetActions(network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DNSAction, error) {
+func (provider *CloudflareProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DNSAction, error) {
 	api, err := provider.apiClient()
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (provider *CloudflareProvider) GetActions(network types.Network, site types
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to find zone ID for network %s.", network.Name)
 	}
-	records, err := api.DNSRecords(context.Background(), zoneID, cloudflare.DNSRecord{}) // TODO: Context and filter?
+	records, err := api.DNSRecords(ctx, zoneID, cloudflare.DNSRecord{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to find DNS records for network %s.", network.Name)
 	}

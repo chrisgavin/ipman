@@ -36,7 +36,7 @@ func registerDiffCommand(rootCommand *RootCommand) {
 				for _, network := range input.Networks {
 					for _, site := range network.Sites {
 						for _, pool := range site.Pools {
-							actions, err := provider.GetActions(network, site, pool, pool.Hosts)
+							actions, err := provider.GetActions(cmd.Context(), network, site, pool, pool.Hosts)
 							if err != nil {
 								return err
 							}
