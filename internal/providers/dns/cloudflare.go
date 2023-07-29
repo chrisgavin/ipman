@@ -3,7 +3,6 @@ package dns
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/chrisgavin/ipman/internal/actions"
@@ -20,13 +19,7 @@ type CloudflareProvider struct {
 
 func (provider *CloudflareProvider) apiClient() (*cloudflare.API, error) {
 	apiKey := provider.APIKey
-	if strings.HasPrefix(apiKey, "$") {
-		apiKey = os.Getenv(apiKey[1:])
-	}
 	apiEmail := provider.APIEmail
-	if strings.HasPrefix(apiEmail, "$") {
-		apiEmail = os.Getenv(apiEmail[1:])
-	}
 	api, err := cloudflare.New(apiKey, apiEmail)
 	return api, errors.Wrap(err, "Failed to create Cloudflare API client.")
 }

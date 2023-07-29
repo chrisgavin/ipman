@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/chrisgavin/ipman/internal/registry"
+	"github.com/chrisgavin/ipman/internal/secret"
 	"github.com/chrisgavin/ipman/internal/types"
 	"github.com/chrisgavin/ipman/internal/validation"
 	"github.com/pkg/errors"
@@ -58,14 +59,34 @@ func ReadInput(path string) (*types.Input, error) {
 			if err := readFile(providerPath, &dynamicProvider, false); err != nil {
 				return nil, err
 			}
-			provider, err := registry.NewDNSProvider(dynamicProvider.Type)
-			if err != nil {
-				return nil, err
+			split := strings.Split(dynamicProvider.Type, ".")
+			if len(split) != 2 {
+				return nil, errors.Errorf("Invalid provider type %s.", dynamicProvider.Type)
 			}
-			if err := readFile(providerPath, provider, true); err != nil {
-				return nil, err
+			kind := split[0]
+			if kind == "dns" {
+				provider, err := registry.NewDNSProvider(dynamicProvider.Type)
+				if err != nil {
+					return nil, err
+				}
+				if err := readFile(providerPath, provider, true); err != nil {
+					return nil, err
+				}
+				secret.ReplaceSecrets(provider)
+				input.DNSProviders = append(input.DNSProviders, provider)
+			} else if kind == "dhcp" {
+				provider, err := registry.NewDHCPProvider(dynamicProvider.Type)
+				if err != nil {
+					return nil, err
+				}
+				if err := readFile(providerPath, provider, true); err != nil {
+					return nil, err
+				}
+				secret.ReplaceSecrets(provider)
+				input.DHCPProviders = append(input.DHCPProviders, provider)
+			} else {
+				return nil, errors.Errorf("Invalid provider kind %s.", kind)
 			}
-			input.DNSProviders = append(input.DNSProviders, provider)
 		}
 	}
 

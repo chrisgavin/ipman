@@ -4,9 +4,10 @@ import "go.uber.org/multierr"
 
 type Input struct {
 	File
-	Version  int       `yaml:"version"`
-	Networks []Network `yaml:"-"`
-	DNSProviders []DNSProvider `yaml:"-"`
+	Version       int            `yaml:"version"`
+	Networks      []Network      `yaml:"-"`
+	DNSProviders  []DNSProvider  `yaml:"-"`
+	DHCPProviders []DHCPProvider `yaml:"-"`
 }
 
 func (input *Input) Validate() error {
