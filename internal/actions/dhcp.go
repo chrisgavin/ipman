@@ -28,10 +28,8 @@ func (action *DHCPCreateReservationAction) ToString() string {
 
 type DHCPDeleteReservationAction struct {
 	BaseDHCPAction
-	MAC     string
-	Address string
 }
 
 func (action *DHCPDeleteReservationAction) ToString() string {
-	return fmt.Sprintf("- %s [%s] = %s", action.GetName(), action.MAC, action.Address)
+	return fmt.Sprintf("- %s", action.GetName())
 }

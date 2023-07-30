@@ -60,18 +60,20 @@ func (provider *RouterOSProvider) GetActions(ctx context.Context, network types.
 		for _, host := range hosts {
 			primaryInterface := host.Interfaces[0]
 			fullName := fmt.Sprintf("%s.%s.%s", host.Name, site.Name, network.Name)
-			if lease["host-name"] == fullName && lease["mac-address"] == primaryInterface.MAC && lease["address"] == primaryInterface.Address {
+			if lease["comment"] == fullName && lease["mac-address"] == primaryInterface.MAC && lease["address"] == primaryInterface.Address && lease["disabled"] == "false" {
 				leaseFound = true
 				break
 			}
 		}
 		if !leaseFound {
+			name := lease["comment"]
+			if name == "" {
+				name = lease["mac-address"]
+			}
 			result = append(result, &actions.DHCPDeleteReservationAction{
 				BaseDHCPAction: actions.BaseDHCPAction{
-					Name: lease["host-name"],
+					Name: name,
 				},
-				MAC:     lease["mac-address"],
-				Address: lease["address"],
 			})
 		}
 	}
@@ -81,7 +83,7 @@ func (provider *RouterOSProvider) GetActions(ctx context.Context, network types.
 		fullName := fmt.Sprintf("%s.%s.%s", host.Name, site.Name, network.Name)
 		leaseFound := false
 		for _, lease := range staticLeases {
-			if lease["host-name"] == fullName && lease["mac-address"] == primaryInterface.MAC && lease["address"] == primaryInterface.Address {
+			if lease["comment"] == fullName && lease["mac-address"] == primaryInterface.MAC && lease["address"] == primaryInterface.Address && lease["disabled"] == "false" {
 				leaseFound = true
 				break
 			}
