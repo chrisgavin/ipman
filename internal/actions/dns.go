@@ -39,12 +39,12 @@ func (action *DNSDeleteRecordAction) ToString() string {
 	return fmt.Sprintf("- [%s] %s", action.GetType(), action.GetName())
 }
 
-type DNSChangeRecordAction struct {
+type DNSUpdateRecordAction struct {
 	BaseDNSAction
 	OldData string
 	NewData string
 }
 
-func (action *DNSChangeRecordAction) ToString() string {
+func (action *DNSUpdateRecordAction) ToString() string {
 	return fmt.Sprintf("* [%s] %s = %s -> %s", action.GetType(), action.GetName(), action.OldData, action.NewData)
 }

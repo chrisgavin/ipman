@@ -2,9 +2,11 @@ package dns
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/chrisgavin/ipman/internal/actions"
+	"github.com/chrisgavin/ipman/internal/diff"
+	"github.com/chrisgavin/ipman/internal/generators"
+	"github.com/chrisgavin/ipman/internal/intermediates"
 	"github.com/chrisgavin/ipman/internal/types"
 )
 
@@ -13,17 +15,8 @@ type NullProvider struct {
 }
 
 func (provider *NullProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DNSAction, error) {
-	result := []actions.DNSAction{}
-	for _, host := range hosts {
-		primaryInterface := host.Interfaces[0]
-		fullName := fmt.Sprintf("%s.%s.%s", host.Name, site.Name, network.Name)
-		result = append(result, &actions.DNSCreateRecordAction{
-			BaseDNSAction: actions.BaseDNSAction{
-				Name: fullName,
-				Type: "A",
-			},
-			Data: primaryInterface.Address,
-		})
-	}
-	return result, nil
+	current := []intermediates.DNSRecord{}
+	desired := generators.HostsToRecords(network, site, pool, hosts)
+	changes := diff.CompareDNSRecords(current, desired)
+	return changes.ToActions(), nil
 }

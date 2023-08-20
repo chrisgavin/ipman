@@ -2,9 +2,11 @@ package dhcp
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/chrisgavin/ipman/internal/actions"
+	"github.com/chrisgavin/ipman/internal/diff"
+	"github.com/chrisgavin/ipman/internal/generators"
+	"github.com/chrisgavin/ipman/internal/intermediates"
 	"github.com/chrisgavin/ipman/internal/types"
 	"github.com/go-routeros/routeros"
 	"github.com/pkg/errors"
@@ -35,7 +37,7 @@ func (provider *RouterOSProvider) client() (*routeros.Client, error) {
 }
 
 func (provider *RouterOSProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DHCPAction, error) {
-	result := []actions.DHCPAction{}
+	current := []intermediates.DHCPReservation{}
 
 	client, err := provider.client()
 	if err != nil {
@@ -48,57 +50,19 @@ func (provider *RouterOSProvider) GetActions(ctx context.Context, network types.
 		return nil, errors.Wrap(err, "Failed to get leases.")
 	}
 
-	staticLeases := []map[string]string{}
 	for _, lease := range leases.Re {
 		if lease.Map["dynamic"] == "false" {
-			staticLeases = append(staticLeases, lease.Map)
-		}
-	}
-
-	for _, lease := range staticLeases {
-		leaseFound := false
-		for _, host := range hosts {
-			primaryInterface := host.Interfaces[0]
-			fullName := fmt.Sprintf("%s.%s.%s", host.Name, site.Name, network.Name)
-			if lease["comment"] == fullName && lease["mac-address"] == primaryInterface.MAC && lease["address"] == primaryInterface.Address && lease["disabled"] == "false" {
-				leaseFound = true
-				break
-			}
-		}
-		if !leaseFound {
-			name := lease["comment"]
-			if name == "" {
-				name = lease["mac-address"]
-			}
-			result = append(result, &actions.DHCPDeleteReservationAction{
-				BaseDHCPAction: actions.BaseDHCPAction{
-					Name: name,
-				},
+			current = append(current, intermediates.DHCPReservation{
+				ProviderState: lease.Map[".id"],
+				Name:          lease.Map["comment"],
+				MAC:           lease.Map["mac-address"],
+				Address:       lease.Map["address"],
+				Disabled:      lease.Map["disabled"] == "true",
 			})
 		}
 	}
 
-	for _, host := range hosts {
-		primaryInterface := host.Interfaces[0]
-		fullName := fmt.Sprintf("%s.%s.%s", host.Name, site.Name, network.Name)
-		leaseFound := false
-		for _, lease := range staticLeases {
-			if lease["comment"] == fullName && lease["mac-address"] == primaryInterface.MAC && lease["address"] == primaryInterface.Address && lease["disabled"] == "false" {
-				leaseFound = true
-				break
-			}
-		}
-		if leaseFound {
-			continue
-		}
-		result = append(result, &actions.DHCPCreateReservationAction{
-			BaseDHCPAction: actions.BaseDHCPAction{
-				Name: fullName,
-			},
-			MAC:     primaryInterface.MAC,
-			Address: primaryInterface.Address,
-		})
-	}
-
-	return result, nil
+	desired := generators.HostsToReservations(network, site, pool, hosts)
+	changes := diff.CompareDHCPReservations(current, desired)
+	return changes.ToActions(), nil
 }

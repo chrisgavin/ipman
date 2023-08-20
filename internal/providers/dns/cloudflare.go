@@ -6,6 +6,9 @@ import (
 	"strings"
 
 	"github.com/chrisgavin/ipman/internal/actions"
+	"github.com/chrisgavin/ipman/internal/diff"
+	"github.com/chrisgavin/ipman/internal/generators"
+	"github.com/chrisgavin/ipman/internal/intermediates"
 	"github.com/chrisgavin/ipman/internal/types"
 	"github.com/cloudflare/cloudflare-go"
 	"github.com/pkg/errors"
@@ -37,48 +40,8 @@ func (provider *CloudflareProvider) GetActions(ctx context.Context, network type
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to find DNS records for network %s.", network.Name)
 	}
-	result := []actions.DNSAction{}
-	for _, host := range hosts {
-		primaryInterface := host.Interfaces[0]
-		fullName := fmt.Sprintf("%s.%s.%s", host.Name, site.Name, network.Name)
-		found := false
-		for _, record := range records {
-			if record.Name == fullName && record.Type == "A" && record.Content == primaryInterface.Address {
-				found = true
-				continue
-			}
-			if record.Name == fullName && record.Type == "A" {
-				found = true
-				result = append(result, &actions.DNSChangeRecordAction{
-					BaseDNSAction: actions.BaseDNSAction{
-						Name: fullName,
-						Type: "A",
-					},
-					OldData: record.Content,
-					NewData: primaryInterface.Address,
-				})
-				continue
-			}
-			if record.Name == fullName && record.Type != "A" {
-				result = append(result, &actions.DNSDeleteRecordAction{
-					BaseDNSAction: actions.BaseDNSAction{
-						Name: fullName,
-						Type: record.Type,
-					},
-				})
-				continue
-			}
-		}
-		if !found {
-			result = append(result, &actions.DNSCreateRecordAction{
-				BaseDNSAction: actions.BaseDNSAction{
-					Name: fullName,
-					Type: "A",
-				},
-				Data: primaryInterface.Address,
-			})
-		}
-	}
+
+	current := []intermediates.DNSRecord{}
 	for _, record := range records {
 		recordPartOfSite := false
 		for _, site := range network.Sites {
@@ -90,22 +53,14 @@ func (provider *CloudflareProvider) GetActions(ctx context.Context, network type
 		if !recordPartOfSite {
 			continue
 		}
-		found := false
-		for _, host := range hosts {
-			fullName := fmt.Sprintf("%s.%s.%s", host.Name, site.Name, network.Name)
-			if record.Name == fullName {
-				found = true
-				continue
-			}
-		}
-		if !found {
-			result = append(result, &actions.DNSDeleteRecordAction{
-				BaseDNSAction: actions.BaseDNSAction{
-					Name: record.Name,
-					Type: record.Type,
-				},
-			})
-		}
+		current = append(current, intermediates.DNSRecord{
+			Name: record.Name,
+			Type: record.Type,
+			Data: record.Content,
+		})
 	}
-	return result, nil
+
+	desired := generators.HostsToRecords(network, site, pool, hosts)
+	changes := diff.CompareDNSRecords(current, desired)
+	return changes.ToActions(), nil
 }
