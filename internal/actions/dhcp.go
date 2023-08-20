@@ -28,8 +28,21 @@ func (action *DHCPCreateReservationAction) ToString() string {
 
 type DHCPDeleteReservationAction struct {
 	BaseDHCPAction
+	ProviderState interface{}
 }
 
 func (action *DHCPDeleteReservationAction) ToString() string {
+	if action.GetName() == "" {
+		return fmt.Sprintf("- unnamed (%s)", action.ProviderState)
+	}
 	return fmt.Sprintf("- %s", action.GetName())
+}
+
+type DHCPUpdateReservationAction struct {
+	BaseDHCPAction
+	OldProviderState interface{}
+	OldMAC           string
+	NewMAC           string
+	OldAddress       string
+	NewAddress       string
 }
