@@ -28,6 +28,14 @@ func HostsToRecords(network types.Network, site types.Site, pool types.Pool, hos
 				Data: networkInterface.Address,
 			})
 		}
+		for _, record := range host.Records {
+			fullName := fmt.Sprintf("%s.%s.%s.%s", record.Name, host.Name, site.Name, network.Name)
+			result = append(result, intermediates.DNSRecord{
+				Name: fullName,
+				Type: record.Type,
+				Data: record.Data,
+			})
+		}
 	}
 	return result
 }

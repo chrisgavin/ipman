@@ -3,14 +3,16 @@ package types
 import (
 	"fmt"
 
+	"github.com/chrisgavin/ipman/internal/intermediates"
 	"github.com/chrisgavin/ipman/internal/validation"
 	"go.uber.org/multierr"
 )
 
 type Host struct {
 	File
-	Name       string      `yaml:"-"`
-	Interfaces []Interface `yaml:"interfaces"`
+	Name       string                    `yaml:"-"`
+	Interfaces []Interface               `yaml:"interfaces"`
+	Records    []intermediates.DNSRecord `yaml:"records"`
 }
 
 func (host *Host) Validate() error {
