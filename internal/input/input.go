@@ -100,14 +100,14 @@ func ReadInput(path string) (*types.Input, error) {
 		}
 		fullNetworkPath := filepath.Join(path, networkPathInfo.Name())
 		if !networkPathInfo.IsDir() {
-			if networkPathInfo.Name() == self {
-				continue
-			}
-			return nil, errors.Errorf("Unexpected file at %s.", fullNetworkPath)
+			continue
 		}
 		networkPath := filepath.Join(fullNetworkPath, self)
 		network := types.Network{}
 		if err := readFile(networkPath, &network, true); err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
 			return nil, err
 		}
 		network.Path = networkPath
