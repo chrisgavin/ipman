@@ -10,10 +10,13 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   checks:
     runs-on: ubuntu-22.04
+    env:
+      TAG: ghcr.io/chrisgavin/ipman:${{ github.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
@@ -21,3 +24,15 @@ jobs:
         run: docker build --target=build .
       - name: Test
         run: docker build --target=test .
+      - name: Build Docker Image
+        run: docker build --tag "$TAG" .
+      - name: Registry Login
+        if: ${{ github.event_name == 'push' }}
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ghcr.io
+          username: github-actions
+          password: ${{ github.token }}
+      - name: Push Docker Image
+        if: ${{ github.event_name == 'push' }}
+        run: docker push "$TAG"
