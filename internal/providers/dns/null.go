@@ -16,7 +16,11 @@ type NullProvider struct {
 
 func (provider *NullProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DNSAction, error) {
 	current := []intermediates.DNSRecord{}
-	desired := generators.HostsToRecords(network, site, pool, hosts)
+	desired := generators.HostsToRecords(hosts, nil)
 	changes := diff.CompareDNSRecords(current, desired)
 	return changes.ToActions(), nil
+}
+
+func (provider *NullProvider) ApplyAction(ctx context.Context, action actions.DNSAction) error {
+	return nil
 }

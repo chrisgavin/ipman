@@ -8,4 +8,5 @@ import (
 
 type DHCPProvider interface {
 	GetActions(ctx context.Context, network Network, site Site, pool Pool, hosts []Host) ([]actions.DHCPAction, error)
+	ApplyAction(ctx context.Context, action actions.DHCPAction) error
 }

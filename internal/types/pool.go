@@ -12,6 +12,7 @@ type Pool struct {
 	Name  string `yaml:"-"`
 	Hosts []Host `yaml:"-"`
 	Range string `yaml:"range"`
+	Site  *Site  `yaml:"-"`
 }
 
 func (pool *Pool) ParseRange() (*net.IPNet, error) {

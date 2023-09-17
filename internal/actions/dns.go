@@ -6,12 +6,14 @@ type DNSAction interface {
 	ToString() string
 	GetName() string
 	GetType() string
+	GetProviderState() interface{}
 }
 
 type BaseDNSAction struct {
 	DNSAction
-	Name string
-	Type string
+	ProviderState interface{}
+	Name          string
+	Type          string
 }
 
 type DNSCreateRecordAction struct {
@@ -29,6 +31,10 @@ func (action *BaseDNSAction) GetName() string {
 
 func (action *BaseDNSAction) GetType() string {
 	return action.Type
+}
+
+func (action *BaseDNSAction) GetProviderState() interface{} {
+	return action.ProviderState
 }
 
 type DNSDeleteRecordAction struct {

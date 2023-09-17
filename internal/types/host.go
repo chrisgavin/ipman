@@ -13,6 +13,7 @@ type Host struct {
 	Name       string                    `yaml:"-"`
 	Interfaces []Interface               `yaml:"interfaces"`
 	Records    []intermediates.DNSRecord `yaml:"records"`
+	Pool       *Pool                     `yaml:"-"`
 }
 
 func (host *Host) Validate() error {

@@ -33,6 +33,7 @@ func NewRootCommand() (*RootCommand, error) {
 	command.root.PersistentFlags().StringVar(&command.input, "input", ".", "The path to the input files.")
 	registerCheckCommand(command)
 	registerDiffCommand(command)
+	registerApplyCommand(command)
 	return command, nil
 }
 
