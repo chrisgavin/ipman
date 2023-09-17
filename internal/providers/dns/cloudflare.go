@@ -20,6 +20,11 @@ type CloudflareProvider struct {
 	APIEmail string `yaml:"api_email"`
 }
 
+type CloudflareProviderState struct {
+	ZoneID   string
+	RecordID string
+}
+
 func (provider *CloudflareProvider) apiClient() (*cloudflare.API, error) {
 	apiKey := provider.APIKey
 	apiEmail := provider.APIEmail
@@ -54,13 +59,48 @@ func (provider *CloudflareProvider) GetActions(ctx context.Context, network type
 			continue
 		}
 		current = append(current, intermediates.DNSRecord{
+			ProviderState: CloudflareProviderState{
+				ZoneID:   zoneID,
+				RecordID: record.ID,
+			},
 			Name: record.Name,
 			Type: record.Type,
 			Data: record.Content,
 		})
 	}
 
-	desired := generators.HostsToRecords(network, site, pool, hosts)
+	desired := generators.HostsToRecords(hosts, CloudflareProviderState{ZoneID: zoneID})
 	changes := diff.CompareDNSRecords(current, desired)
 	return changes.ToActions(), nil
+}
+
+func (provider *CloudflareProvider) ApplyAction(ctx context.Context, action actions.DNSAction) error {
+	api, err := provider.apiClient()
+	if err != nil {
+		return err
+	}
+	providerState := action.GetProviderState().(CloudflareProviderState)
+	switch typedAction := action.(type) {
+	case *actions.DNSCreateRecordAction:
+		record := cloudflare.DNSRecord{
+			Type:    typedAction.Type,
+			Name:    typedAction.Name,
+			Content: typedAction.Data,
+		}
+		_, err = api.CreateDNSRecord(ctx, providerState.ZoneID, record)
+		return errors.Wrapf(err, "Failed to create DNS record %s.", typedAction.Name)
+	case *actions.DNSUpdateRecordAction:
+		record := cloudflare.DNSRecord{
+			Type:    typedAction.Type,
+			Name:    typedAction.Name,
+			Content: typedAction.NewData,
+		}
+		err = api.UpdateDNSRecord(ctx, providerState.ZoneID, providerState.RecordID, record)
+		return errors.Wrapf(err, "Failed to update DNS record %s.", typedAction.Name)
+	case *actions.DNSDeleteRecordAction:
+		err := api.DeleteDNSRecord(ctx, providerState.ZoneID, providerState.RecordID)
+		return errors.Wrapf(err, "Failed to delete DNS record %s.", typedAction.Name)
+	default:
+		return errors.Errorf("Unknown action type %T.", action)
+	}
 }

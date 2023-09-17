@@ -9,9 +9,10 @@ import (
 
 type Site struct {
 	File
-	Name  string `yaml:"-"`
-	Pools []Pool `yaml:"-"`
-	Range string `yaml:"range"`
+	Name    string   `yaml:"-"`
+	Pools   []Pool   `yaml:"-"`
+	Range   string   `yaml:"range"`
+	Network *Network `yaml:"-"`
 }
 
 func (site *Site) ParseRange() (*net.IPNet, error) {

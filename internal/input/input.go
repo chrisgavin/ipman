@@ -131,6 +131,7 @@ func ReadInput(path string) (*types.Input, error) {
 			}
 			site.Path = sitePath
 			site.Name = sitePathInfo.Name()
+			site.Network = &network
 			poolPaths, err := ioutil.ReadDir(fullSitePath)
 			if err != nil {
 				return nil, err
@@ -150,6 +151,7 @@ func ReadInput(path string) (*types.Input, error) {
 				}
 				pool.Path = poolPath
 				pool.Name = poolPathInfo.Name()
+				pool.Site = &site
 				hostPaths, err := ioutil.ReadDir(fullPoolPath)
 				if err != nil {
 					return nil, err
@@ -168,6 +170,7 @@ func ReadInput(path string) (*types.Input, error) {
 					}
 					host.Path = fullHostPath
 					host.Name = strings.Split(hostPathInfo.Name(), ".")[0]
+					host.Pool = &pool
 					pool.Hosts = append(pool.Hosts, host)
 				}
 				site.Pools = append(site.Pools, pool)

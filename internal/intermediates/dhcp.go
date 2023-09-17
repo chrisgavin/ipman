@@ -6,10 +6,10 @@ import (
 
 type DHCPReservation struct {
 	ProviderState interface{}
-	Name        string
-	MAC         string
-	Address     string
-	Disabled    bool
+	Name          string
+	MAC           string
+	Address       string
+	Disabled      bool
 }
 
 func (reservation *DHCPReservation) Identifier() string {
@@ -34,21 +34,21 @@ func (changes *DHCPChanges) ToActions() []actions.DHCPAction {
 	for _, deletion := range changes.Deletions {
 		result = append(result, &actions.DHCPDeleteReservationAction{
 			BaseDHCPAction: actions.BaseDHCPAction{
-				Name: deletion.Name,
+				Name:          deletion.Name,
+				ProviderState: deletion.ProviderState,
 			},
-			ProviderState: deletion.ProviderState,
 		})
 	}
 	for current, desired := range changes.Updates {
 		result = append(result, &actions.DHCPUpdateReservationAction{
 			BaseDHCPAction: actions.BaseDHCPAction{
-				Name: current.Name,
+				Name:          current.Name,
+				ProviderState: current.ProviderState,
 			},
-			OldProviderState: current.ProviderState,
-			OldMAC:              current.MAC,
-			NewMAC:              desired.MAC,
-			OldAddress:          current.Address,
-			NewAddress:          desired.Address,
+			OldMAC:     current.MAC,
+			NewMAC:     desired.MAC,
+			OldAddress: current.Address,
+			NewAddress: desired.Address,
 		})
 	}
 	for _, addition := range changes.Additions {

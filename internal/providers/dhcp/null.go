@@ -16,7 +16,11 @@ type NullProvider struct {
 
 func (provider *NullProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DHCPAction, error) {
 	current := []intermediates.DHCPReservation{}
-	desired := generators.HostsToReservations(network, site, pool, hosts)
+	desired := generators.HostsToReservations(hosts, nil)
 	changes := diff.CompareDHCPReservations(current, desired)
 	return changes.ToActions(), nil
+}
+
+func (provider *NullProvider) ApplyAction(ctx context.Context, action actions.DHCPAction) error {
+	return nil
 }

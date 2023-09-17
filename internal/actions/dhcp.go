@@ -1,19 +1,27 @@
 package actions
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type DHCPAction interface {
 	ToString() string
 	GetName() string
+	GetProviderState() interface{}
 }
 
 type BaseDHCPAction struct {
 	DHCPAction
-	Name string
+	ProviderState interface{}
+	Name          string
 }
 
 func (action *BaseDHCPAction) GetName() string {
 	return action.Name
+}
+
+func (action *BaseDHCPAction) GetProviderState() interface{} {
+	return action.ProviderState
 }
 
 type DHCPCreateReservationAction struct {
@@ -28,7 +36,6 @@ func (action *DHCPCreateReservationAction) ToString() string {
 
 type DHCPDeleteReservationAction struct {
 	BaseDHCPAction
-	ProviderState interface{}
 }
 
 func (action *DHCPDeleteReservationAction) ToString() string {
@@ -40,9 +47,8 @@ func (action *DHCPDeleteReservationAction) ToString() string {
 
 type DHCPUpdateReservationAction struct {
 	BaseDHCPAction
-	OldProviderState interface{}
-	OldMAC           string
-	NewMAC           string
-	OldAddress       string
-	NewAddress       string
+	OldMAC     string
+	NewMAC     string
+	OldAddress string
+	NewAddress string
 }

@@ -20,6 +20,10 @@ type RouterOSProvider struct {
 	Insecure bool
 }
 
+type RouterOSProviderState struct {
+	ReservationID string
+}
+
 func (provider *RouterOSProvider) client() (*routeros.Client, error) {
 	var client *routeros.Client
 	var err error
@@ -53,7 +57,7 @@ func (provider *RouterOSProvider) GetActions(ctx context.Context, network types.
 	for _, lease := range leases.Re {
 		if lease.Map["dynamic"] == "false" {
 			current = append(current, intermediates.DHCPReservation{
-				ProviderState: lease.Map[".id"],
+				ProviderState: RouterOSProviderState{ReservationID: lease.Map[".id"]},
 				Name:          lease.Map["comment"],
 				MAC:           lease.Map["mac-address"],
 				Address:       lease.Map["address"],
@@ -62,7 +66,31 @@ func (provider *RouterOSProvider) GetActions(ctx context.Context, network types.
 		}
 	}
 
-	desired := generators.HostsToReservations(network, site, pool, hosts)
+	desired := generators.HostsToReservations(hosts, nil)
 	changes := diff.CompareDHCPReservations(current, desired)
 	return changes.ToActions(), nil
+}
+
+func (provider *RouterOSProvider) ApplyAction(ctx context.Context, action actions.DHCPAction) error {
+	client, err := provider.client()
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	switch typedAction := action.(type) {
+	case *actions.DHCPCreateReservationAction:
+		_, err := client.Run("/ip/dhcp-server/lease/add", "=address="+typedAction.Address, "=mac-address="+typedAction.MAC, "=comment="+typedAction.GetName())
+		return errors.Wrapf(err, "Failed to create DHCP reservation %s.", typedAction.GetName())
+	case *actions.DHCPDeleteReservationAction:
+		providerState := action.GetProviderState().(RouterOSProviderState)
+		_, err := client.Run("/ip/dhcp-server/lease/remove", "=.id="+providerState.ReservationID)
+		return errors.Wrapf(err, "Failed to delete DHCP reservation %s.", typedAction.GetName())
+	case *actions.DHCPUpdateReservationAction:
+		providerState := action.GetProviderState().(RouterOSProviderState)
+		_, err := client.Run("/ip/dhcp-server/lease/set", "=.id="+providerState.ReservationID, "=address="+typedAction.NewAddress, "=mac-address="+typedAction.NewMAC)
+		return errors.Wrapf(err, "Failed to update DHCP reservation %s.", typedAction.GetName())
+	default:
+		return errors.Errorf("Unknown action type %T.", action)
+	}
 }
