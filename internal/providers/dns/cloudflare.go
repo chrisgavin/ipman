@@ -41,7 +41,7 @@ func (provider *CloudflareProvider) GetActions(ctx context.Context, network type
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to find zone ID for network %s.", network.Name)
 	}
-	records, err := api.DNSRecords(ctx, zoneID, cloudflare.DNSRecord{})
+	records, _, err := api.ListDNSRecords(ctx, cloudflare.ZoneIdentifier(zoneID), cloudflare.ListDNSRecordsParams{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to find DNS records for network %s.", network.Name)
 	}
@@ -82,23 +82,24 @@ func (provider *CloudflareProvider) ApplyAction(ctx context.Context, action acti
 	providerState := action.GetProviderState().(CloudflareProviderState)
 	switch typedAction := action.(type) {
 	case *actions.DNSCreateRecordAction:
-		record := cloudflare.DNSRecord{
+		record := cloudflare.CreateDNSRecordParams{
 			Type:    typedAction.Type,
 			Name:    typedAction.Name,
 			Content: typedAction.Data,
 		}
-		_, err = api.CreateDNSRecord(ctx, providerState.ZoneID, record)
+		_, err = api.CreateDNSRecord(ctx, cloudflare.ZoneIdentifier(providerState.ZoneID), record)
 		return errors.Wrapf(err, "Failed to create DNS record %s.", typedAction.Name)
 	case *actions.DNSUpdateRecordAction:
-		record := cloudflare.DNSRecord{
+		record := cloudflare.UpdateDNSRecordParams{
+			ID:      providerState.RecordID,
 			Type:    typedAction.Type,
 			Name:    typedAction.Name,
 			Content: typedAction.NewData,
 		}
-		err = api.UpdateDNSRecord(ctx, providerState.ZoneID, providerState.RecordID, record)
+		_, err = api.UpdateDNSRecord(ctx, cloudflare.ZoneIdentifier(providerState.ZoneID), record)
 		return errors.Wrapf(err, "Failed to update DNS record %s.", typedAction.Name)
 	case *actions.DNSDeleteRecordAction:
-		err := api.DeleteDNSRecord(ctx, providerState.ZoneID, providerState.RecordID)
+		err := api.DeleteDNSRecord(ctx, cloudflare.ZoneIdentifier(providerState.ZoneID), providerState.RecordID)
 		return errors.Wrapf(err, "Failed to delete DNS record %s.", typedAction.Name)
 	default:
 		return errors.Errorf("Unknown action type %T.", action)
