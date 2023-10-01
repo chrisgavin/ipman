@@ -3,7 +3,7 @@ module github.com/chrisgavin/ipman
 go 1.19
 
 require (
-	github.com/cloudflare/cloudflare-go v0.77.0
+	github.com/cloudflare/cloudflare-go v0.78.0
 	github.com/go-routeros/routeros v0.0.0-20210123142807-2a44d57c6730
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
