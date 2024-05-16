@@ -52,3 +52,19 @@ type DHCPUpdateReservationAction struct {
 	OldAddress string
 	NewAddress string
 }
+
+func (action *DHCPUpdateReservationAction) ToString() string {
+	name := action.GetName()
+	if name == "" {
+		name = "unnamed"
+	}
+	mac := action.OldMAC
+	if action.OldMAC != action.NewMAC {
+		mac = fmt.Sprintf("%s -> %s", action.OldMAC, action.NewMAC)
+	}
+	address := action.OldAddress
+	if action.OldAddress != action.NewAddress {
+		address = fmt.Sprintf("%s -> %s", action.OldAddress, action.NewAddress)
+	}
+	return fmt.Sprintf("- %s [%s] = %s", name, mac, address)
+}
