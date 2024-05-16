@@ -16,7 +16,7 @@ jobs:
   checks:
     runs-on: ubuntu-22.04
     env:
-      TAG: ghcr.io/chrisgavin/ipman:${{ github.sha }}
+      IMAGE: ghcr.io/chrisgavin/ipman
     steps:
       - name: Checkout
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b
@@ -25,7 +25,7 @@ jobs:
       - name: Test
         run: docker build --target=test .
       - name: Build Docker Image
-        run: docker build --tag "$TAG" .
+        run: docker build --tag "ipman" .
       - name: Registry Login
         if: ${{ github.event_name == 'push' }}
         uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20
@@ -35,4 +35,11 @@ jobs:
           password: ${{ github.token }}
       - name: Push Docker Image
         if: ${{ github.event_name == 'push' }}
-        run: docker push "$TAG"
+        run: |
+          docker tag "ipman" "$IMAGE:$GITHUB_SHA"
+          docker push "$IMAGE:$GITHUB_SHA"
+      - name: Push Latest Docker Image
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        run: |
+          docker tag "ipman" "$IMAGE:latest"
+          docker push "$IMAGE:latest"
