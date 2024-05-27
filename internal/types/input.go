@@ -5,6 +5,7 @@ import "go.uber.org/multierr"
 type Input struct {
 	File
 	Version       int            `yaml:"version"`
+	Providers     []string       `yaml:"providers"`
 	Networks      []Network      `yaml:"-"`
 	DNSProviders  []DNSProvider  `yaml:"-"`
 	DHCPProviders []DHCPProvider `yaml:"-"`

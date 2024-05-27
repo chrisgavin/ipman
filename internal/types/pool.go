@@ -9,10 +9,11 @@ import (
 
 type Pool struct {
 	File
-	Name  string `yaml:"-"`
-	Hosts []Host `yaml:"-"`
-	Range string `yaml:"range"`
-	Site  *Site  `yaml:"-"`
+	Providers []string `yaml:"providers"`
+	Name      string   `yaml:"-"`
+	Hosts     []Host   `yaml:"-"`
+	Range     string   `yaml:"range"`
+	Site      *Site    `yaml:"-"`
 }
 
 func (pool *Pool) ParseRange() (*net.IPNet, error) {

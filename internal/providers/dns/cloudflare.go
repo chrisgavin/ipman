@@ -2,8 +2,6 @@ package dns
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/chrisgavin/ipman/internal/actions"
 	"github.com/chrisgavin/ipman/internal/diff"
@@ -16,6 +14,7 @@ import (
 
 type CloudflareProvider struct {
 	Type     string
+	Name     string `yaml:"-"`
 	APIKey   string `yaml:"api_key"`
 	APIEmail string `yaml:"api_email"`
 }
@@ -30,6 +29,10 @@ func (provider *CloudflareProvider) apiClient() (*cloudflare.API, error) {
 	apiEmail := provider.APIEmail
 	api, err := cloudflare.New(apiKey, apiEmail)
 	return api, errors.Wrap(err, "Failed to create Cloudflare API client.")
+}
+
+func (provider *CloudflareProvider) GetName(ctx context.Context) string {
+	return provider.Name
 }
 
 func (provider *CloudflareProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DNSAction, error) {
@@ -48,16 +51,6 @@ func (provider *CloudflareProvider) GetActions(ctx context.Context, network type
 
 	current := []intermediates.DNSRecord{}
 	for _, record := range records {
-		recordPartOfSite := false
-		for _, site := range network.Sites {
-			if strings.HasSuffix(record.Name, fmt.Sprintf(".%s.%s", site.Name, network.Name)) {
-				recordPartOfSite = true
-				continue
-			}
-		}
-		if !recordPartOfSite {
-			continue
-		}
 		current = append(current, intermediates.DNSRecord{
 			ProviderState: CloudflareProviderState{
 				ZoneID:   zoneID,
@@ -68,6 +61,9 @@ func (provider *CloudflareProvider) GetActions(ctx context.Context, network type
 			Data: record.Content,
 		})
 	}
+
+	// Filter out records that are not in the site.
+	current = generators.RecordsForSite(network, site, current)
 
 	desired := generators.HostsToRecords(hosts, CloudflareProviderState{ZoneID: zoneID})
 	changes := diff.CompareDNSRecords(current, desired)

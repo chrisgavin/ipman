@@ -2,6 +2,7 @@ package generators
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/chrisgavin/ipman/internal/intermediates"
 	"github.com/chrisgavin/ipman/internal/types"
@@ -39,6 +40,17 @@ func HostsToRecords(hosts []types.Host, providerState interface{}) []intermediat
 				ProviderState: providerState,
 			})
 		}
+	}
+	return result
+}
+
+func RecordsForSite(network types.Network, site types.Site, records []intermediates.DNSRecord) []intermediates.DNSRecord {
+	result := []intermediates.DNSRecord{}
+	for _, record := range records {
+		if !strings.HasSuffix(record.Name, fmt.Sprintf(".%s.%s", site.Name, network.Name)) {
+			continue
+		}
+		result = append(result, record)
 	}
 	return result
 }
