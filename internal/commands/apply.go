@@ -1,9 +1,8 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/chrisgavin/ipman/internal/input"
+	"github.com/chrisgavin/ipman/internal/processor"
 	"github.com/spf13/cobra"
 )
 
@@ -31,46 +30,13 @@ func registerApplyCommand(rootCommand *RootCommand) {
 				return err
 			}
 
-			for _, provider := range input.DNSProviders {
-				command.logger.Info(fmt.Sprintf("Processing changes for provider %T.", provider))
-				for _, network := range input.Networks {
-					for _, site := range network.Sites {
-						for _, pool := range site.Pools {
-							actions, err := provider.GetActions(cmd.Context(), network, site, pool, pool.Hosts)
-							if err != nil {
-								return err
-							}
-							for _, action := range actions {
-								command.logger.Info(action.ToString())
-								err := provider.ApplyAction(cmd.Context(), action)
-								if err != nil {
-									return err
-								}
-							}
-						}
-					}
-				}
+			err = processor.ProcessDNS(cmd.Context(), input, true, command.logger)
+			if err != nil {
+				return err
 			}
-
-			for _, provider := range input.DHCPProviders {
-				command.logger.Info(fmt.Sprintf("Processing changes for provider %T.", provider))
-				for _, network := range input.Networks {
-					for _, site := range network.Sites {
-						for _, pool := range site.Pools {
-							actions, err := provider.GetActions(cmd.Context(), network, site, pool, pool.Hosts)
-							if err != nil {
-								return err
-							}
-							for _, action := range actions {
-								command.logger.Info(action.ToString())
-								err := provider.ApplyAction(cmd.Context(), action)
-								if err != nil {
-									return err
-								}
-							}
-						}
-					}
-				}
+			err = processor.ProcessDHCP(cmd.Context(), input, true, command.logger)
+			if err != nil {
+				return err
 			}
 
 			return nil

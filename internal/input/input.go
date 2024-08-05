@@ -65,7 +65,7 @@ func ReadInput(path string) (*types.Input, error) {
 			}
 			kind := split[0]
 			if kind == "dns" {
-				provider, err := registry.NewDNSProvider(dynamicProvider.Type)
+				provider, err := registry.NewDNSProvider(dynamicProvider.Type, strings.Split(providerPathInfo.Name(), ".")[0])
 				if err != nil {
 					return nil, err
 				}
@@ -75,7 +75,7 @@ func ReadInput(path string) (*types.Input, error) {
 				secret.ReplaceSecrets(provider)
 				input.DNSProviders = append(input.DNSProviders, provider)
 			} else if kind == "dhcp" {
-				provider, err := registry.NewDHCPProvider(dynamicProvider.Type)
+				provider, err := registry.NewDHCPProvider(dynamicProvider.Type, strings.Split(providerPathInfo.Name(), ".")[0])
 				if err != nil {
 					return nil, err
 				}

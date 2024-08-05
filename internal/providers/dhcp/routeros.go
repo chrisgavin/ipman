@@ -14,6 +14,7 @@ import (
 
 type RouterOSProvider struct {
 	Type     string
+	Name     string `yaml:"-"`
 	Address  string
 	Username string
 	Password string
@@ -38,6 +39,10 @@ func (provider *RouterOSProvider) client() (*routeros.Client, error) {
 		return nil, errors.Wrap(err, "Failed to connect to RouterOS.")
 	}
 	return client, err
+}
+
+func (provider *RouterOSProvider) GetName(ctx context.Context) string {
+	return provider.Name
 }
 
 func (provider *RouterOSProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DHCPAction, error) {
