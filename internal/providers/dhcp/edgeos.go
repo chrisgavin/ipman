@@ -10,6 +10,7 @@ import (
 	"github.com/chrisgavin/ipman/internal/intermediates"
 	"github.com/chrisgavin/ipman/internal/types"
 	"github.com/pkg/errors"
+	"github.com/seancfoley/ipaddress-go/ipaddr"
 )
 
 type EdgeOSProvider struct {
@@ -44,7 +45,23 @@ func (provider *EdgeOSProvider) GetActions(ctx context.Context, network types.Ne
 		return nil, errors.Wrap(err, "Failed to get DHCP leases.")
 	}
 
-	for leaseName, lease := range configuration.Get.Service.DHCPServer.SharedNetworkName["Local"].Subnet[pool.Range].StaticMapping {
+	poolRange := ipaddr.NewIPAddressString(pool.Range)
+	subnets := configuration.Get.Service.DHCPServer.SharedNetworkName["Local"].Subnet
+	var matchingSubnet *edgeosclient.Subnet
+	for subnetRange, subnet := range subnets {
+		parsedSubnetRange := ipaddr.NewIPAddressString(subnetRange)
+		if parsedSubnetRange.Contains(poolRange) {
+			if matchingSubnet != nil {
+				return nil, errors.New("Multiple subnets contain the pool range " + pool.Range + ".")
+			}
+			matchingSubnet = &subnet
+		}
+	}
+	if matchingSubnet == nil {
+		return nil, errors.New("No subnet contains the pool range " + pool.Range + ".")
+	}
+
+	for leaseName, lease := range matchingSubnet.StaticMapping {
 		current = append(current, intermediates.DHCPReservation{
 			ProviderState: EdgeOSProviderState{ReservationID: leaseName},
 			Name:          leaseName,
