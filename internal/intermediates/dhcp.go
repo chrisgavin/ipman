@@ -55,6 +55,7 @@ func (changes *DHCPChanges) ToActions() []actions.DHCPAction {
 		result = append(result, &actions.DHCPCreateReservationAction{
 			BaseDHCPAction: actions.BaseDHCPAction{
 				Name: addition.Name,
+				ProviderState: addition.ProviderState,
 			},
 			MAC:     addition.MAC,
 			Address: addition.Address,
