@@ -1,10 +1,10 @@
 package edgeosclient
 
-type EdgeOSConfiguration struct {
-	Get Get `json:"GET"`
+type GetResponse struct {
+	Configuration ConfigurationRoot `json:"GET"`
 }
 
-type Get struct {
+type ConfigurationRoot struct {
 	Service Service `json:"service"`
 }
 
@@ -21,7 +21,7 @@ type SharedNetwork struct {
 }
 
 type Subnet struct {
-	StaticMapping map[string]StaticMapping `json:"static-mapping"`
+	StaticMapping map[string]*StaticMapping `json:"static-mapping"`
 }
 
 type StaticMapping struct {
