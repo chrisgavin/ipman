@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"errors"
-
 	"github.com/chrisgavin/ipman/internal/input"
 	"github.com/chrisgavin/ipman/internal/processor"
 	"github.com/spf13/cobra"
@@ -41,7 +39,7 @@ func registerApplyCommand(rootCommand *RootCommand) {
 				return err
 			}
 
-			return errors.New("Not implemented")
+			return nil
 		},
 	}
 	command.root.AddCommand(applyCommand)
