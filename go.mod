@@ -6,7 +6,7 @@ require (
 	github.com/cloudflare/cloudflare-go v0.101.0
 	github.com/go-routeros/routeros v0.0.0-20210123142807-2a44d57c6730
 	github.com/pkg/errors v0.9.1
-	github.com/seancfoley/ipaddress-go v1.6.0
+	github.com/seancfoley/ipaddress-go v1.7.0
 	github.com/spf13/cobra v1.8.1
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
