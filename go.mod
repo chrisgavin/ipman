@@ -1,6 +1,6 @@
 module github.com/chrisgavin/ipman
 
-go 1.19
+go 1.23.4
 
 require (
 	github.com/cloudflare/cloudflare-go v0.110.0
