@@ -1,6 +1,7 @@
 module github.com/chrisgavin/ipman
 
 go 1.23.4
+
 toolchain go1.24.1
 
 require (
@@ -20,7 +21,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/seancfoley/bintree v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
-	golang.org/x/net v0.36.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
 )
