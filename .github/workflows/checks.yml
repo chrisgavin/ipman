@@ -28,7 +28,7 @@ jobs:
         run: docker build --tag "ipman" .
       - name: Registry Login
         if: ${{ github.event_name == 'push' }}
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef
         with:
           registry: ghcr.io
           username: github-actions
