@@ -19,7 +19,7 @@ jobs:
       IMAGE: ghcr.io/chrisgavin/ipman
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Build
         run: docker build --target=build .
       - name: Test
@@ -28,7 +28,7 @@ jobs:
         run: docker build --tag "ipman" .
       - name: Registry Login
         if: ${{ github.event_name == 'push' }}
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           registry: ghcr.io
           username: github-actions
