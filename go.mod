@@ -2,7 +2,7 @@ module github.com/chrisgavin/ipman
 
 go 1.23.4
 
-toolchain go1.24.1
+toolchain go1.25.3
 
 require (
 	github.com/cloudflare/cloudflare-go v0.116.0
