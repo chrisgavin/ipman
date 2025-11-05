@@ -9,6 +9,9 @@ import (
 	"github.com/chrisgavin/ipman/internal/intermediates"
 	"github.com/chrisgavin/ipman/internal/types"
 	"github.com/cloudflare/cloudflare-go/v6"
+	"github.com/cloudflare/cloudflare-go/v6/dns"
+	"github.com/cloudflare/cloudflare-go/v6/option"
+	"github.com/cloudflare/cloudflare-go/v6/zones"
 	"github.com/pkg/errors"
 )
 
@@ -24,11 +27,14 @@ type CloudflareProviderState struct {
 	RecordID string
 }
 
-func (provider *CloudflareProvider) apiClient() (*cloudflare.API, error) {
+func (provider *CloudflareProvider) apiClient() (*cloudflare.Client, error) {
 	apiKey := provider.APIKey
 	apiEmail := provider.APIEmail
-	api, err := cloudflare.New(apiKey, apiEmail)
-	return api, errors.Wrap(err, "Failed to create Cloudflare API client.")
+	api := cloudflare.NewClient(
+		option.WithAPIKey(apiKey),
+		option.WithAPIEmail(apiEmail),
+	)
+	return api, nil
 }
 
 func (provider *CloudflareProvider) GetName(ctx context.Context) string {
@@ -40,24 +46,34 @@ func (provider *CloudflareProvider) GetActions(ctx context.Context, network type
 	if err != nil {
 		return nil, err
 	}
-	zoneID, err := api.ZoneIDByName(network.Name)
+
+	zoneList, err := api.Zones.List(ctx, zones.ZoneListParams{
+		Name: cloudflare.F(network.Name),
+	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to find zone ID for network %s.", network.Name)
+		return nil, errors.Wrapf(err, "Failed to find zone for network %s.", network.Name)
 	}
-	records, _, err := api.ListDNSRecords(ctx, cloudflare.ZoneIdentifier(zoneID), cloudflare.ListDNSRecordsParams{})
+	if len(zoneList.Result) == 0 {
+		return nil, errors.Errorf("No zone found for network %s.", network.Name)
+	}
+	zoneID := zoneList.Result[0].ID
+
+	records, err := api.DNS.Records.List(ctx, dns.RecordListParams{
+		ZoneID: cloudflare.F(zoneID),
+	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to find DNS records for network %s.", network.Name)
 	}
 
 	current := []intermediates.DNSRecord{}
-	for _, record := range records {
+	for _, record := range records.Result {
 		current = append(current, intermediates.DNSRecord{
 			ProviderState: CloudflareProviderState{
 				ZoneID:   zoneID,
 				RecordID: record.ID,
 			},
 			Name: record.Name,
-			Type: record.Type,
+			Type: string(record.Type),
 			Data: record.Content,
 		})
 	}
@@ -78,24 +94,31 @@ func (provider *CloudflareProvider) ApplyAction(ctx context.Context, action acti
 	providerState := action.GetProviderState().(CloudflareProviderState)
 	switch typedAction := action.(type) {
 	case *actions.DNSCreateRecordAction:
-		record := cloudflare.CreateDNSRecordParams{
-			Type:    typedAction.Type,
-			Name:    typedAction.Name,
-			Content: typedAction.Data,
-		}
-		_, err = api.CreateDNSRecord(ctx, cloudflare.ZoneIdentifier(providerState.ZoneID), record)
+		params := dns.RecordNewParams{
+			ZoneID: cloudflare.F(providerState.ZoneID),
+			Body: dns.RecordNewParamsBody{
+				Type:    cloudflare.F(dns.RecordNewParamsBodyType(typedAction.Type)),
+				Name:    cloudflare.F(typedAction.Name),
+				Content: cloudflare.F(typedAction.Data),
+			}}
+		_, err = api.DNS.Records.New(ctx, params)
 		return errors.Wrapf(err, "Failed to create DNS record %s.", typedAction.Name)
 	case *actions.DNSUpdateRecordAction:
-		record := cloudflare.UpdateDNSRecordParams{
-			ID:      providerState.RecordID,
-			Type:    typedAction.Type,
-			Name:    typedAction.Name,
-			Content: typedAction.NewData,
+		params := dns.RecordUpdateParams{
+			ZoneID: cloudflare.F(providerState.ZoneID),
+			Body: dns.RecordUpdateParamsBody{
+				Type:    cloudflare.F(dns.RecordUpdateParamsBodyType(typedAction.Type)),
+				Name:    cloudflare.F(typedAction.Name),
+				Content: cloudflare.F(typedAction.NewData),
+			},
 		}
-		_, err = api.UpdateDNSRecord(ctx, cloudflare.ZoneIdentifier(providerState.ZoneID), record)
+		_, err = api.DNS.Records.Update(ctx, providerState.RecordID, params)
 		return errors.Wrapf(err, "Failed to update DNS record %s.", typedAction.Name)
 	case *actions.DNSDeleteRecordAction:
-		err := api.DeleteDNSRecord(ctx, cloudflare.ZoneIdentifier(providerState.ZoneID), providerState.RecordID)
+		params := dns.RecordDeleteParams{
+			ZoneID: cloudflare.F(providerState.ZoneID),
+		}
+		_, err := api.DNS.Records.Delete(ctx, providerState.RecordID, params)
 		return errors.Wrapf(err, "Failed to delete DNS record %s.", typedAction.Name)
 	default:
 		return errors.Errorf("Unknown action type %T.", action)
