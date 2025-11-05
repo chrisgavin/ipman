@@ -8,7 +8,7 @@ import (
 	"github.com/chrisgavin/ipman/internal/generators"
 	"github.com/chrisgavin/ipman/internal/intermediates"
 	"github.com/chrisgavin/ipman/internal/types"
-	"github.com/cloudflare/cloudflare-go"
+	"github.com/cloudflare/cloudflare-go/v6"
 	"github.com/pkg/errors"
 )
 
