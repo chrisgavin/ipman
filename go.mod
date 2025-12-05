@@ -5,7 +5,7 @@ go 1.23.4
 toolchain go1.25.5
 
 require (
-	github.com/cloudflare/cloudflare-go/v6 v6.3.0
+	github.com/cloudflare/cloudflare-go/v6 v6.4.0
 	github.com/go-routeros/routeros v0.0.0-20210123142807-2a44d57c6730
 	github.com/pkg/errors v0.9.1
 	github.com/seancfoley/ipaddress-go v1.7.1
