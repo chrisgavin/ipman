@@ -10,7 +10,7 @@ RUN go build ./cmd/...
 FROM ci AS test
 RUN go test ./...
 
-FROM ubuntu:noble@sha256:c35e29c9450151419d9448b0fd75374fec4fff364a27f176fb458d472dfc9e54
+FROM ubuntu:noble@sha256:7a398144c5a2fa7dbd9362e460779dc6659bd9b19df50f724250c62ca7812eb3
 LABEL org.opencontainers.image.source=https://github.com/chrisgavin/ipman/
 COPY --from=build /src/ipman /usr/bin/
 ENTRYPOINT ["ipman"]
