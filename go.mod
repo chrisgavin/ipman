@@ -8,7 +8,7 @@ require (
 	github.com/cloudflare/cloudflare-go/v7 v7.8.0
 	github.com/go-routeros/routeros v0.0.0-20210123142807-2a44d57c6730
 	github.com/pkg/errors v0.9.1
-	github.com/seancfoley/ipaddress-go v1.7.1
+	github.com/seancfoley/ipaddress-go v1.8.0
 	github.com/spf13/cobra v1.10.2
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.28.0
@@ -19,7 +19,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/rogpeppe/go-internal v1.16.0 // indirect
-	github.com/seancfoley/bintree v1.3.1 // indirect
+	github.com/seancfoley/bintree v1.4.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tidwall/gjson v1.19.0 // indirect
