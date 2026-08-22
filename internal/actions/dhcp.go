@@ -6,6 +6,7 @@ import (
 
 type DHCPAction interface {
 	ToString() string
+	GetOperation() string
 	GetName() string
 	GetProviderState() interface{}
 }
@@ -30,12 +31,20 @@ type DHCPCreateReservationAction struct {
 	Address string
 }
 
+func (action *DHCPCreateReservationAction) GetOperation() string {
+	return OperationCreate
+}
+
 func (action *DHCPCreateReservationAction) ToString() string {
 	return fmt.Sprintf("+ %s [%s] = %s", action.GetName(), action.MAC, action.Address)
 }
 
 type DHCPDeleteReservationAction struct {
 	BaseDHCPAction
+}
+
+func (action *DHCPDeleteReservationAction) GetOperation() string {
+	return OperationDelete
 }
 
 func (action *DHCPDeleteReservationAction) ToString() string {
@@ -51,6 +60,10 @@ type DHCPUpdateReservationAction struct {
 	NewMAC     string
 	OldAddress string
 	NewAddress string
+}
+
+func (action *DHCPUpdateReservationAction) GetOperation() string {
+	return OperationUpdate
 }
 
 func (action *DHCPUpdateReservationAction) ToString() string {

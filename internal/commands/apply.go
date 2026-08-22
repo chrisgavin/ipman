@@ -30,11 +30,11 @@ func registerApplyCommand(rootCommand *RootCommand) {
 				return err
 			}
 
-			err = processor.ProcessDNS(cmd.Context(), input, true, command.logger)
+			_, err = processor.ProcessDNS(cmd.Context(), input, true, command.logger)
 			if err != nil {
 				return err
 			}
-			err = processor.ProcessDHCP(cmd.Context(), input, true, command.logger)
+			_, err = processor.ProcessDHCP(cmd.Context(), input, true, command.logger)
 			if err != nil {
 				return err
 			}
