@@ -4,6 +4,7 @@ import "fmt"
 
 type DNSAction interface {
 	ToString() string
+	GetOperation() string
 	GetName() string
 	GetType() string
 	GetProviderState() interface{}
@@ -19,6 +20,10 @@ type BaseDNSAction struct {
 type DNSCreateRecordAction struct {
 	BaseDNSAction
 	Data string
+}
+
+func (action *DNSCreateRecordAction) GetOperation() string {
+	return OperationCreate
 }
 
 func (action *DNSCreateRecordAction) ToString() string {
@@ -41,6 +46,10 @@ type DNSDeleteRecordAction struct {
 	BaseDNSAction
 }
 
+func (action *DNSDeleteRecordAction) GetOperation() string {
+	return OperationDelete
+}
+
 func (action *DNSDeleteRecordAction) ToString() string {
 	return fmt.Sprintf("- [%s] %s", action.GetType(), action.GetName())
 }
@@ -49,6 +58,10 @@ type DNSUpdateRecordAction struct {
 	BaseDNSAction
 	OldData string
 	NewData string
+}
+
+func (action *DNSUpdateRecordAction) GetOperation() string {
+	return OperationUpdate
 }
 
 func (action *DNSUpdateRecordAction) ToString() string {
