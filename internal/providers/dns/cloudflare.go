@@ -41,7 +41,7 @@ func (provider *CloudflareProvider) GetName(ctx context.Context) string {
 	return provider.Name
 }
 
-func (provider *CloudflareProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DNSAction, error) {
+func (provider *CloudflareProvider) GetActions(ctx context.Context, network types.Network, site types.Site) ([]actions.DNSAction, error) {
 	api, err := provider.apiClient()
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (provider *CloudflareProvider) GetActions(ctx context.Context, network type
 	// Filter out records that are not in the site.
 	current = generators.RecordsForSite(network, site, current)
 
-	desired := generators.HostsToRecords(hosts, CloudflareProviderState{ZoneID: zoneID})
+	desired := generators.HostsToRecords(site.Hosts(), CloudflareProviderState{ZoneID: zoneID})
 	changes := diff.CompareDNSRecords(current, desired)
 	return changes.ToActions(), nil
 }

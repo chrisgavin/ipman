@@ -37,3 +37,11 @@ func (site *Site) Validate() error {
 	}
 	return errors
 }
+
+func (site *Site) Hosts() []Host {
+	hosts := []Host{}
+	for _, pool := range site.Pools {
+		hosts = append(hosts, pool.Hosts...)
+	}
+	return hosts
+}

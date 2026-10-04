@@ -2,6 +2,7 @@ package generators
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/chrisgavin/ipman/internal/intermediates"
 	"github.com/chrisgavin/ipman/internal/types"
@@ -22,6 +23,17 @@ func HostsToReservations(hosts []types.Host, providerState interface{}) []interm
 				ProviderState: providerState,
 			})
 		}
+	}
+	return result
+}
+
+func ReservationsForSite(network types.Network, site types.Site, reservations []intermediates.DHCPReservation) []intermediates.DHCPReservation {
+	result := []intermediates.DHCPReservation{}
+	for _, reservation := range reservations {
+		if !strings.HasSuffix(reservation.Name, fmt.Sprintf(".%s.%s", site.Name, network.Name)) {
+			continue
+		}
+		result = append(result, reservation)
 	}
 	return result
 }

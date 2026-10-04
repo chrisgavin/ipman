@@ -6,7 +6,6 @@ type Change struct {
 	Provider  string `json:"provider"`
 	Network   string `json:"network"`
 	Site      string `json:"site"`
-	Pool      string `json:"pool"`
 	Name      string `json:"name"`
 	Type      string `json:"type,omitempty"`
 	Summary   string `json:"summary"`

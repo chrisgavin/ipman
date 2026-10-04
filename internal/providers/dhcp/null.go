@@ -19,9 +19,9 @@ func (provider *NullProvider) GetName(ctx context.Context) string {
 	return provider.Name
 }
 
-func (provider *NullProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DHCPAction, error) {
+func (provider *NullProvider) GetActions(ctx context.Context, network types.Network, site types.Site) ([]actions.DHCPAction, error) {
 	current := []intermediates.DHCPReservation{}
-	desired := generators.HostsToReservations(hosts, nil)
+	desired := generators.HostsToReservations(site.Hosts(), nil)
 	changes := diff.CompareDHCPReservations(current, desired)
 	return changes.ToActions(), nil
 }

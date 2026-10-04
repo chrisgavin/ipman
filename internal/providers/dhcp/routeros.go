@@ -45,7 +45,7 @@ func (provider *RouterOSProvider) GetName(ctx context.Context) string {
 	return provider.Name
 }
 
-func (provider *RouterOSProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DHCPAction, error) {
+func (provider *RouterOSProvider) GetActions(ctx context.Context, network types.Network, site types.Site) ([]actions.DHCPAction, error) {
 	current := []intermediates.DHCPReservation{}
 
 	client, err := provider.client()
@@ -71,7 +71,9 @@ func (provider *RouterOSProvider) GetActions(ctx context.Context, network types.
 		}
 	}
 
-	desired := generators.HostsToReservations(hosts, nil)
+	current = generators.ReservationsForSite(network, site, current)
+
+	desired := generators.HostsToReservations(site.Hosts(), nil)
 	changes := diff.CompareDHCPReservations(current, desired)
 	return changes.ToActions(), nil
 }
