@@ -2,7 +2,7 @@ package processor
 
 import "github.com/chrisgavin/ipman/internal/types"
 
-func providerIncluded(provider string, network types.Network, site types.Site, pool types.Pool) bool {
+func providerIncluded(provider string, network types.Network, site types.Site) bool {
 	for _, p := range network.Providers {
 		if p == provider {
 			return true
@@ -13,9 +13,11 @@ func providerIncluded(provider string, network types.Network, site types.Site, p
 			return true
 		}
 	}
-	for _, p := range pool.Providers {
-		if p == provider {
-			return true
+	for _, pool := range site.Pools {
+		for _, p := range pool.Providers {
+			if p == provider {
+				return true
+			}
 		}
 	}
 	return false

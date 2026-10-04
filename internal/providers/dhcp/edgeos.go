@@ -2,6 +2,7 @@ package dhcp
 
 import (
 	"context"
+	"sort"
 
 	"github.com/chrisgavin/ipman/internal/actions"
 	"github.com/chrisgavin/ipman/internal/clients/edgeosclient"
@@ -34,9 +35,7 @@ func (provider *EdgeOSProvider) GetName(ctx context.Context) string {
 	return provider.Name
 }
 
-func (provider *EdgeOSProvider) GetActions(ctx context.Context, network types.Network, site types.Site, pool types.Pool, hosts []types.Host) ([]actions.DHCPAction, error) {
-	current := []intermediates.DHCPReservation{}
-
+func (provider *EdgeOSProvider) GetActions(ctx context.Context, network types.Network, site types.Site) ([]actions.DHCPAction, error) {
 	client := provider.client()
 
 	configuration, err := client.Get()
@@ -44,34 +43,50 @@ func (provider *EdgeOSProvider) GetActions(ctx context.Context, network types.Ne
 		return nil, errors.Wrap(err, "Failed to get DHCP leases.")
 	}
 
-	poolRange := ipaddr.NewIPAddressString(pool.Range)
 	subnets := configuration.Service.DHCPServer.SharedNetworkName["Local"].Subnet
-	var matchingSubnet *string
-	for subnetRange := range subnets {
-		parsedSubnetRange := ipaddr.NewIPAddressString(subnetRange)
-		if parsedSubnetRange.Contains(poolRange) {
-			if matchingSubnet != nil {
-				return nil, errors.New("Multiple subnets contain the pool range " + pool.Range + ".")
+
+	subnetHosts := map[string][]types.Host{}
+	for _, pool := range site.Pools {
+		poolRange := ipaddr.NewIPAddressString(pool.Range)
+		matchingSubnet := ""
+		for subnetRange := range subnets {
+			parsedSubnetRange := ipaddr.NewIPAddressString(subnetRange)
+			if parsedSubnetRange.Contains(poolRange) {
+				if matchingSubnet != "" {
+					return nil, errors.New("Multiple subnets contain the pool range " + pool.Range + ".")
+				}
+				matchingSubnet = subnetRange
 			}
-			matchingSubnet = &subnetRange
 		}
-	}
-	if matchingSubnet == nil {
-		return nil, errors.New("No subnet contains the pool range " + pool.Range + ".")
-	}
-
-	for leaseName, lease := range configuration.Service.DHCPServer.SharedNetworkName["Local"].Subnet[*matchingSubnet].StaticMapping {
-		current = append(current, intermediates.DHCPReservation{
-			ProviderState: EdgeOSProviderState{ReservationID: leaseName, Subnet: *matchingSubnet},
-			Name:          leaseName,
-			Address:       lease.IPAddress,
-			MAC:           lease.MACAddress,
-		})
+		if matchingSubnet == "" {
+			return nil, errors.New("No subnet contains the pool range " + pool.Range + ".")
+		}
+		subnetHosts[matchingSubnet] = append(subnetHosts[matchingSubnet], pool.Hosts...)
 	}
 
-	desired := generators.HostsToReservations(hosts, EdgeOSProviderState{Subnet: *matchingSubnet})
-	changes := diff.CompareDHCPReservations(current, desired)
-	return changes.ToActions(), nil
+	matchingSubnets := []string{}
+	for subnet := range subnetHosts {
+		matchingSubnets = append(matchingSubnets, subnet)
+	}
+	sort.Strings(matchingSubnets)
+
+	result := []actions.DHCPAction{}
+	for _, subnet := range matchingSubnets {
+		current := []intermediates.DHCPReservation{}
+		for leaseName, lease := range subnets[subnet].StaticMapping {
+			current = append(current, intermediates.DHCPReservation{
+				ProviderState: EdgeOSProviderState{ReservationID: leaseName, Subnet: subnet},
+				Name:          leaseName,
+				Address:       lease.IPAddress,
+				MAC:           lease.MACAddress,
+			})
+		}
+
+		desired := generators.HostsToReservations(subnetHosts[subnet], EdgeOSProviderState{Subnet: subnet})
+		changes := diff.CompareDHCPReservations(current, desired)
+		result = append(result, changes.ToActions()...)
+	}
+	return result, nil
 }
 
 func (provider *EdgeOSProvider) ApplyAction(ctx context.Context, action actions.DHCPAction) error {
